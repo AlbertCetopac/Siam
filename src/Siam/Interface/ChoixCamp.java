@@ -1,5 +1,6 @@
 package Siam.Interface;
 
+import Siam.Camp;
 import Siam.Game;
 import Siam.Joueur;
 
@@ -18,7 +19,7 @@ public class ChoixCamp extends JFrame implements ActionListener {
     static final Random random = new Random();
     private Game game;
     private Joueur joueur;
-    private Outils outil;
+    private OutilsFont outil;
 
     private JLabel titreCB;
     private JRadioButton JRBelephant, JRBrhinoceros, aleatoire;
@@ -28,7 +29,7 @@ public class ChoixCamp extends JFrame implements ActionListener {
     public ChoixCamp(Game game, Joueur joueur) {
         this.game = game;
         this.joueur = joueur;
-        outil = new Outils();
+        outil = new OutilsFont();
         choixCamp();
         setControlChoixCamp(this);
     }
@@ -128,13 +129,19 @@ public class ChoixCamp extends JFrame implements ActionListener {
 
         if (source == getValider()){
             if(getJRBelephant().isSelected()){
-                joueur.setCamp(joueur.getElephant());
+                game.setJoueurActif(game.getJoueurs()[0]);
+                //joueur.setCamp(Camp.ELEPHANT);
             }
             else if (getJRBrhinoceros().isSelected()){
-                joueur.setCamp(joueur.getRhinoceros());
+                game.setJoueurActif(game.getJoueurs()[1]);
+                //joueur.setCamp(Camp.RHINOCEROS);
             }
             else {
-                joueur.setCamp(random.nextInt(2));
+                game.setJoueurActif(game.getJoueurs()[random.nextInt(2)]);
+                /*if(random.nextBoolean())
+                    joueur.setCamp(Camp.ELEPHANT);
+                else
+                    joueur.setCamp(Camp.RHINOCEROS);*/
             }
             game.start(this);
         }
