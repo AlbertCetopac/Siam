@@ -3,51 +3,25 @@ package Siam;
 import Siam.Interface.*;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.image.BufferStrategy;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferInt;
-import java.util.Random;
+import java.util.ArrayList;
 
 public class Game implements Runnable, Constantes {
 
     private Plateau plateau;
     private Joueur[] joueurs;
 
-    // L'ecran gere un tableau de pixel
+    private VueJeu vueJeu;
     private JFrame fenetre;
-    private Ecran ecran;
-    private BufferedImage image;
-    private int[] pixels;
 
-    private Bouton boutonPoserPiece;
-    private Bouton boutonSortirPiece;
-    private Bouton boutonDeplacerPiece;
-    private Bouton boutonChangerOrientation;
-    private Bouton boutonPoserPieceSelec;
-    private Bouton boutonSortirPieceSelec;
-    private Bouton boutonDeplacerPieceSelec;
-    private Bouton boutonChangerOrientationSelec;
+    private DetectionSouris souris;
 
-    private Fleche flecheHaut;
-    private Fleche flecheBas;
-    private Fleche flecheDroite;
-    private Fleche flecheGauche;
-    private Fleche flecheHautSelec;
-    private Fleche flecheBasSelec;
-    private Fleche flecheDroiteSelec;
-    private Fleche flecheGaucheSelec;
-
-    private Fleche elephant;
-    private Fleche rhinoceros;
-
-    private DetectionSouris detectionSouris;
     private boolean pieceSelectionnee;
     private boolean placerPiece;
     private boolean sortirPiece;
     private boolean deplacerPiece;
     private boolean changerOrientation;
     private boolean selectionnerOrientation;
+    private boolean enCoursDeDeplacement;
     private Joueur joueurActif;
     private Animal animalSelectionnee;
 
@@ -58,39 +32,21 @@ public class Game implements Runnable, Constantes {
         this(new Joueur(Camp.ELEPHANT), new Joueur(Camp.RHINOCEROS), false, false, false, false, false, false, null);
     }
 
-    public Game(Joueur joueur1, Joueur joueur2, boolean pieceSelectionnee, boolean placerPiece, boolean sortirPiece, boolean deplacerPiece, boolean changerOrientation, boolean selectionnerOrientation, Animal animalSelectionnee) {
+    public Game(Joueur joueur1, Joueur joueur2, boolean pieceSelectionnee, boolean placerPiece, boolean sortirPiece,
+                boolean deplacerPiece, boolean changerOrientation, boolean selectionnerOrientation,
+                Animal animalSelectionnee) {
+
         this.plateau = new Plateau(NOMBRE_CASE_INI);
         joueurs = new Joueur[2];
         joueurs[0] = joueur1;
         joueurs[1] = joueur2;
         joueurActif = joueurs[0];
+        fenetre = new JFrame();
 
         joueurs[0].setPlateau(plateau);
         joueurs[1].setPlateau(plateau);
 
-        boutonPoserPiece = new Bouton(0, 0, SpriteBouton.boutonPoserPiece);
-        boutonSortirPiece = new Bouton(0, 125, SpriteBouton.boutonSortirPiece);
-        boutonDeplacerPiece = new Bouton(0, 250, SpriteBouton.boutonDeplacerPiece);
-        boutonChangerOrientation = new Bouton(0, 375, SpriteBouton.boutonChangerOrientation);
-        boutonPoserPieceSelec = new Bouton(0, 0, SpriteBouton.boutonPoserPieceSelec);
-        boutonSortirPieceSelec = new Bouton(0, 125, SpriteBouton.boutonSortirPieceSelec);
-        boutonDeplacerPieceSelec = new Bouton(0, 250, SpriteBouton.boutonDeplacerPieceSelec);
-        boutonChangerOrientationSelec = new Bouton(0, 375, SpriteBouton.boutonChangerOrientationSelec);
-
-        flecheHaut = new Fleche(75, 0, SpriteFleche.flecheBas, Orientation.HAUT);
-        flecheBas = new Fleche(75, 100, SpriteFleche.flecheBas, Orientation.BAS);
-        flecheDroite = new Fleche(125, 50, SpriteFleche.flecheDroite, Orientation.DROITE);
-        flecheGauche = new Fleche(25, 50, SpriteFleche.flecheDroite, Orientation.GAUCHE);
-        flecheHautSelec = new Fleche(75, 0, SpriteFleche.flecheBasSelec, Orientation.HAUT);
-        flecheBasSelec = new Fleche(75, 100, SpriteFleche.flecheBasSelec, Orientation.BAS);
-        flecheDroiteSelec = new Fleche(125, 50, SpriteFleche.flecheDroiteSelec, Orientation.DROITE);
-        flecheGaucheSelec = new Fleche(25, 50, SpriteFleche.flecheDroiteSelec, Orientation.GAUCHE);
-
-        elephant = new Fleche(75, 50, SpriteFleche.elephant, null);
-        rhinoceros = new Fleche(75, 50, SpriteFleche.rhinoceros, null);
-
-        image = new BufferedImage(LARGEUR_FENETRE_INI,HAUTEUR_FENETRE_INI, BufferedImage.TYPE_INT_RGB);
-        pixels = ((DataBufferInt) image.getRaster().getDataBuffer()).getData();
+        souris = new DetectionSouris(this, plateau);
 
         this.pieceSelectionnee = pieceSelectionnee;
         this.placerPiece = placerPiece;
@@ -98,11 +54,14 @@ public class Game implements Runnable, Constantes {
         this.deplacerPiece = deplacerPiece;
         this.changerOrientation = changerOrientation;
         this.selectionnerOrientation = selectionnerOrientation;
+        this.enCoursDeDeplacement = false;
 
         this.animalSelectionnee = animalSelectionnee;
 
         running = false;
     }
+
+    public Plateau getPlateau(){return plateau;}
 
     public Joueur[] getJoueurs() {
         return joueurs;
@@ -156,6 +115,14 @@ public class Game implements Runnable, Constantes {
         this.selectionnerOrientation = selectionnerOrientation;
     }
 
+    public boolean isEnCoursDeDeplacement() {
+        return enCoursDeDeplacement;
+    }
+
+    public void setEnCoursDeDeplacement(boolean enCoursDeDeplacement) {
+        this.enCoursDeDeplacement = enCoursDeDeplacement;
+    }
+
     public Joueur getJoueurActif() {
         return joueurActif;
     }
@@ -177,28 +144,15 @@ public class Game implements Runnable, Constantes {
         else joueurActif = joueurs[0];
     }
 
-    public synchronized void start(JFrame fenetre) {
+    public JFrame getFenetre(){
+        return fenetre;
+    }
+
+    public synchronized void start() {
         running = true;
         thread = new Thread(this, "Affichage");
-        detectionSouris = new DetectionSouris(this, plateau);
 
-        // Fenetre + debut de gestion graphique
-        this.fenetre = fenetre;
-        fenetre.removeAll();
-        Dimension size = new Dimension(LARGEUR_FENETRE_INI, HAUTEUR_FENETRE_INI);
-        fenetre.setPreferredSize(size);
-
-        fenetre.addMouseListener(detectionSouris);
-
-        ecran = new Ecran(LARGEUR_FENETRE_INI, HAUTEUR_FENETRE_INI);
-
-        fenetre.setTitle("Siam");
-        fenetre.setResizable(false);
-        fenetre.pack();
-        fenetre.setLocationRelativeTo(null);
-
-        fenetre.setVisible(true);
-
+        vueJeu = new VueJeu(this, fenetre, souris);
         thread.start();
     }
 
@@ -213,56 +167,79 @@ public class Game implements Runnable, Constantes {
 
     public void run() {
         while(running) {
-            update();
-            render();
+            affichageBouton();
+            fenetre.repaint();
         }
         stop();
     }
 
-    public void update() {
+    private void affichageBouton() {
+        if(enCoursDeDeplacement){
+            vueJeu.getDeplacer().setEnabled(false);
+            vueJeu.getSortir().setEnabled(false);
+            vueJeu.getOrienter().setEnabled(false);
+            vueJeu.getPoser().setEnabled(false);
+        }
+        else if (pieceSelectionnee) {
+            vueJeu.getDeplacer().setEnabled(true);
+            if (animalSelectionnee.getAbscisse() == 0 || animalSelectionnee.getOrdonnee() == 0 || animalSelectionnee.getAbscisse() == NOMBRE_CASE_INI-1 || animalSelectionnee.getOrdonnee() == NOMBRE_CASE_INI-1) vueJeu.getSortir().setEnabled(true);
+            vueJeu.getOrienter().setEnabled(true);
+        }
+        else if (!selectionnerOrientation) {
+            if (!joueurActif.restePiece()) vueJeu.getPoser().setEnabled(false);
+            else vueJeu.getPoser().setEnabled(true);
+            vueJeu.getDeplacer().setEnabled(false);
+            vueJeu.getSortir().setEnabled(false);
+            vueJeu.getOrienter().setEnabled(false);
+            vueJeu.getFlecheHaut().setEnabled(false);
+            vueJeu.getFlecheBas().setEnabled(false);
+            vueJeu.getFlecheDroite().setEnabled(false);
+            vueJeu.getFlecheGauche().setEnabled(false);
+        }
+        if (selectionnerOrientation) {
+            vueJeu.getPoser().setEnabled(false);
+            vueJeu.getFlecheHaut().setEnabled(true);
+            vueJeu.getFlecheBas().setEnabled(true);
+            vueJeu.getFlecheDroite().setEnabled(true);
+            vueJeu.getFlecheGauche().setEnabled(true);
+        }
 
     }
 
-    public void render() {
-        BufferStrategy bs = fenetre.getBufferStrategy();
-        if(bs == null){
-            fenetre.createBufferStrategy(3);
-            return;
+    public void deselection(){
+        setPieceSelectionnee(false);
+        getAnimalSelectionnee().setSelectionnee(false);
+        setAnimalSelectionnee(null);
+        setSelectionnerOrientation(false);
+    }
+
+    public boolean testOrientationEntreAnimalEtCase(Animal animal,Case uneCase){
+        switch(animal.getOrientation()){
+            case BAS:
+                return animal.getAbscisse() == uneCase.getAbscisse()
+                        && animal.getOrdonnee() + 1 == uneCase.getOrdonnee();
+            case HAUT:
+                return animal.getAbscisse() == uneCase.getAbscisse()
+                        && animal.getOrdonnee()  -1 == uneCase.getOrdonnee();
+            case DROITE:
+                return animal.getAbscisse() + 1 == uneCase.getAbscisse()
+                        && animal.getOrdonnee() == uneCase.getOrdonnee();
+            case GAUCHE:
+                return animal.getAbscisse() - 1 == uneCase.getAbscisse()
+                        && animal.getOrdonnee() == uneCase.getOrdonnee();
         }
-        ecran.clear();
-        plateau.render(ecran);
+        return false;
+    }
 
-        if (placerPiece) boutonPoserPieceSelec.render(ecran);
-        else boutonPoserPiece.render(ecran);
-        if (sortirPiece) boutonSortirPieceSelec.render(ecran);
-        else boutonSortirPiece.render(ecran);
-        if (deplacerPiece) boutonDeplacerPieceSelec.render(ecran);
-        else boutonDeplacerPiece.render(ecran);
-        if (changerOrientation) boutonChangerOrientationSelec.render(ecran);
-        else boutonChangerOrientation.render(ecran);
+    //TODO Nathan
+    public Camp trouveCampGagnant(ArrayList <Piece> ligne){
+        //recuperer l'orientation de la premiere case, qui contient l'animal qui pousse, et stocker cette orientation
+                //dans une variable "orientationPoussee" par ex
+        //parcourir le tab ligne en partant de la fin (on peut commencer par l'avant derniere case
+                //car la derniere case contient une montagne (normalement)
+        //verifier si la case actuel est un animal et si il est orient� dans la meme direction que orientationPoussee
+                //si c'est le cas, retourner le camp de cette animal
 
-        if (selectionnerOrientation) {
-            flecheHautSelec.render(ecran);
-            flecheBasSelec.render(ecran);
-            flecheDroiteSelec.render(ecran);
-            flecheGaucheSelec.render(ecran);
-        } else {
-            flecheHaut.render(ecran);
-            flecheBas.render(ecran);
-            flecheDroite.render(ecran);
-            flecheGauche.render(ecran);
-        }
-
-        if (joueurActif.getCamp() == Camp.ELEPHANT) elephant.render(ecran);
-        else rhinoceros.render(ecran);
-
-        for (int i = 0; i < pixels.length; i++){
-            pixels[i] = ecran.getPixel(i);
-        }
-
-        Graphics g = bs.getDrawGraphics();
-        g.drawImage(image,0,0, fenetre.getWidth(),fenetre.getHeight(),null);
-        g.dispose();
-        bs.show();
+        return null; // a supprimer (cette ligne est la pour que le code compile en attendant que la methode soit implement�)
     }
 }
