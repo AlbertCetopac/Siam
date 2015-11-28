@@ -1,5 +1,7 @@
 package Siam;
 
+import Siam.Enum.Camp;
+import Siam.Enum.Orientation;
 import Siam.Interface.Ecran;
 
 import java.util.ArrayList;
@@ -182,5 +184,23 @@ public class Plateau {
                     ligne.get(i).getOrdonnee() + ajouty);
         }
         return ret;
+    }
+
+    public Camp trouveCampGagnant(ArrayList <Piece> ligne){
+
+        Animal pousseur;
+        pousseur = (Animal)ligne.get(0);
+        Animal pieceCourante;
+        Orientation orientationPousseur = pousseur.getOrientation();
+        for (int i = ligne.size() - 2;i >= 1; i++) {
+
+            if (ligne.get(i) instanceof Animal) {
+                pieceCourante = (Animal)ligne.get(i);
+                if (pieceCourante.getOrientation() == orientationPousseur) {
+                    return pieceCourante.getCamp();
+                }
+            }
+        }
+        return pousseur.getCamp();
     }
 }

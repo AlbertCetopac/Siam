@@ -1,9 +1,11 @@
 package Siam;
 
+import Siam.Enum.Camp;
+import Siam.Enum.Theme;
 import Siam.Interface.*;
+import Siam.Sons.Musique;
 
 import javax.swing.*;
-import java.util.ArrayList;
 
 public class Game implements Runnable, Constantes {
 
@@ -12,6 +14,9 @@ public class Game implements Runnable, Constantes {
 
     private VueJeu vueJeu;
     private JFrame fenetre;
+    private Theme theme;
+    private Musique libMuse;
+    private  boolean son;
 
     private DetectionSouris souris;
 
@@ -29,19 +34,20 @@ public class Game implements Runnable, Constantes {
     private boolean running;
 
     public Game() {
-        this(new Joueur(Camp.ELEPHANT), new Joueur(Camp.RHINOCEROS), false, false, false, false, false, false, null);
+        this(new Joueur(Camp.ELEPHANT), new Joueur(Camp.RHINOCEROS), false, false, false, false, false, false, null,
+                new JFrame());
     }
 
     public Game(Joueur joueur1, Joueur joueur2, boolean pieceSelectionnee, boolean placerPiece, boolean sortirPiece,
                 boolean deplacerPiece, boolean changerOrientation, boolean selectionnerOrientation,
-                Animal animalSelectionnee) {
+                Animal animalSelectionnee, JFrame fenetre) {
 
         this.plateau = new Plateau(NOMBRE_CASE_INI);
         joueurs = new Joueur[2];
         joueurs[0] = joueur1;
         joueurs[1] = joueur2;
         joueurActif = joueurs[0];
-        fenetre = new JFrame();
+        this.fenetre = fenetre;
 
         joueurs[0].setPlateau(plateau);
         joueurs[1].setPlateau(plateau);
@@ -57,6 +63,11 @@ public class Game implements Runnable, Constantes {
         this.enCoursDeDeplacement = false;
 
         this.animalSelectionnee = animalSelectionnee;
+
+        theme = Theme.STANDARD;
+        libMuse = new Musique();
+        libMuse.start();
+        son = true;
 
         running = false;
     }
@@ -148,6 +159,53 @@ public class Game implements Runnable, Constantes {
         return fenetre;
     }
 
+    public void setTheme(Theme theme) {
+        this.theme = theme;
+    }
+
+    public Theme getTheme() {
+        return theme;
+    }
+
+    public void setLibMuse(Musique libMuse) {
+        this.libMuse = libMuse;
+    }
+
+    public Musique getMusique() {
+        return libMuse;
+    }
+
+    public void setSon(boolean son) {
+        this.son = son;
+    }
+
+    public boolean isSon() {
+        return son;
+    }
+
+    public void initGame(Joueur joueur1, Joueur joueur2) {
+        this.plateau = new Plateau(NOMBRE_CASE_INI);
+        joueurs = new Joueur[2];
+        joueurs[0] = joueur1;
+        joueurs[1] = joueur2;
+        joueurActif = joueurs[0];
+
+        joueurs[0].setPlateau(plateau);
+        joueurs[1].setPlateau(plateau);
+
+        souris = new DetectionSouris(this, plateau);
+
+        pieceSelectionnee = false;
+        placerPiece = false;
+        sortirPiece = false;
+        deplacerPiece = false;
+        changerOrientation = false;
+        selectionnerOrientation = false;
+        enCoursDeDeplacement = false;
+
+        animalSelectionnee = null;
+    }
+
     public synchronized void start() {
         running = true;
         thread = new Thread(this, "Affichage");
@@ -229,17 +287,5 @@ public class Game implements Runnable, Constantes {
                         && animal.getOrdonnee() == uneCase.getOrdonnee();
         }
         return false;
-    }
-
-    //TODO Nathan
-    public Camp trouveCampGagnant(ArrayList <Piece> ligne){
-        //recuperer l'orientation de la premiere case, qui contient l'animal qui pousse, et stocker cette orientation
-                //dans une variable "orientationPoussee" par ex
-        //parcourir le tab ligne en partant de la fin (on peut commencer par l'avant derniere case
-                //car la derniere case contient une montagne (normalement)
-        //verifier si la case actuel est un animal et si il est orient� dans la meme direction que orientationPoussee
-                //si c'est le cas, retourner le camp de cette animal
-
-        return null; // a supprimer (cette ligne est la pour que le code compile en attendant que la methode soit implement�)
     }
 }
