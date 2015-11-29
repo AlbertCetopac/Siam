@@ -3,17 +3,16 @@ package Siam.Sons;
 import javazoom.jl.player.Player;
 
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
 public class MP3 {
 
     private Player player;
-    private InputStream is;
+    private InputStream inputStream;
 
-    public MP3(String filename) {
+    public MP3(String nom) {
         try {
-            is = new FileInputStream(filename);
+            inputStream = new FileInputStream(nom);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -21,10 +20,12 @@ public class MP3 {
 
     public void play() {
         try {
-            player = new Player(is);
+            player = new Player(inputStream);
             PlayerThread pt = new PlayerThread();
             pt.start();
-            while (!player.isComplete()) {}
+            while (!player.isComplete()) {
+                if (player == null) return;
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -32,6 +33,7 @@ public class MP3 {
 
     public void stop() {
         player.close();
+        player = null;
     }
 
     class PlayerThread extends Thread {
